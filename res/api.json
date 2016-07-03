@@ -1,5 +1,6 @@
 [
 	{
-		"serviceUri":"/service/user-test"
+		"serviceUri":"/service/user-test",
+		"interClass":"com.rpc.service.Test"
 	}
 ]

@@ -19,7 +19,7 @@ public class JsonFile {
 	 * @param path
 	 * @return
 	 */
-	public static String ReadFile(String filepath){
+	private static String ReadFile(String filepath){
 	    File file = new File(filepath);
 	    BufferedReader reader = null;
 	    String data = "";
@@ -44,16 +44,26 @@ public class JsonFile {
 	    return data;
 	}
 	
-	public static JSONArray toJSONArray(String data){
+	private static JSONArray toJSONArray(String data){
 		JSONArray obj = JSON.parseArray(data);
 		return obj;
 	}
 	
-	public static HashMap<String, Api> toApiProto(JSONArray jsonarray) {
-		HashMap<String, HashMap<String, String>> hm = new HashMap<String, HashMap<String, String>>();
+	/**
+	 * json file -> HashMap<String, Api>
+	 * @param filepath
+	 * @return
+	 */
+	public static HashMap<String, Api> toApiProto(String filepath) {
+		String data = ReadFile(filepath);
+		JSONArray jsonarray = toJSONArray(data);
+		HashMap<String, Api> hm = new HashMap<String, Api>();
 		for(int i = 0; i < jsonarray.size(); i++) {
-			System.out.println("");
+			Api tmp = JSON.parseObject(jsonarray.get(i).toString(), Api.class);
+			hm.put(tmp.getServiceUri(), tmp);
 		}
-		return null; 
+		return hm; 
 	}
+
+	
 }
