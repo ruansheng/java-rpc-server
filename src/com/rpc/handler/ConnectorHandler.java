@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.rpc.entry.Api;
-import com.rpc.entry.Cmd;
 import com.rpc.utils.JsonFile;
 import com.rpc.utils.StringToArray;
 
@@ -14,8 +13,11 @@ import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.omg.Dynamic.Parameter;
 
 
 /**
@@ -40,48 +42,90 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
         String strings[] = StringToArray.convertStrToArray(body);
         if(strings.length == 5) {
         	String params = strings[4];
-        	
-        	Cmd objs = JSON.parseObject(params, Cmd.class);
-        	
-            String action = objs.getAction();
-            String method = objs.getParams().getM();
-            String args = objs.getParams().getArgs();
+            
+            JSONObject json_obj = JSON.parseObject(params);
+            JSONObject params_obj = (JSONObject)json_obj.get("params");
+            
+            // 解析出参数
+            String action = (String) json_obj.get("action");
+            String method_name = (String) params_obj.get("m");
+            JSONArray args_array = params_obj.getJSONArray("args");
+            
+            System.out.println("action:" + action);
+            System.out.println("method_name:" + method_name);
+            System.out.println("args_array:" + args_array.toJSONString());
             
             // 接口不存在
             if(!this.api.containsKey(action)) {
             	Map<String, String> map = new HashMap<String, String>();
-            	map.put("ec", "200");
+            	map.put("ec", "401");
             	map.put("em", "action not exists");
             	String cmd = JSON.toJSON(map).toString();
             	String redis_cmd = this.bulidRedisString(cmd);
                 ctx.writeAndFlush(this.buildRespBody(redis_cmd));
-            } else {
-            	System.out.println("action:" + action);
+                return ;
+            }
             	Api api_obj = api.get(action);
             	
             	String interClass = api_obj.getInterClass();
             	
-            	System.out.println("interClass:" + interClass);
-            	
             	Class<?> class_obj = Class.forName(interClass);
-            	
-            	System.out.println("class_obj:" + class_obj.getName());
-            	
             	Object api_class = class_obj.newInstance();
             	
-            	Method api_method = class_obj.getMethod(method);
-            	System.out.println(api_method);
+            	Method[] api_methods = class_obj.getMethods();
             	
-            	System.out.println("args:" + args);
-            	Object ret_obj = api_method.invoke(api_class);
+            	Method api_method = null;
+            	for(int i = 0; i < api_methods.length; i++) {
+            		if(api_methods[i].getName().equals(method_name)) {
+            			api_method = api_methods[i]; 
+            			break;
+            		}
+            	}
+            	
+            	Type[] types = api_method.getGenericParameterTypes();
+            	
+            	System.out.println("length:" + types.length);
+            	
+            	// 判断客户端传的参数个数和服务端定义参数个数是否一致
+            	if(types.length != args_array.size()) {
+            		Map<String, String> map = new HashMap<String, String>();
+                	map.put("ec", "401");
+                	map.put("em", "client params != server params");
+                	String cmd = JSON.toJSON(map).toString();
+                	String redis_cmd = this.bulidRedisString(cmd);
+                    ctx.writeAndFlush(this.buildRespBody(redis_cmd));
+                    return ;
+            	}
+            	
+            	Object object[] = new Object[]{};
+            	for(int i = 0; i < types.length; i++) {
+            		String param_class_name = args_array.get(i).getClass().getName();
+            		
+            		System.out.println("1" + args_array.get(i).getClass().getName());
+            		System.out.println("2" + types[i].getClass().getName());
+            		//Class c = types[i].getClass();
+            		//Object cs = c.newInstance();
+            		
+            		//System.out.println(args_array.get(i));
+            	}
+            	/*
+            	for(int j = 0; j < object.length; j++) {
+            		System.out.println(object.toString());
+            	}
+            	*/
+            	
+            	/*
+            	String s = new String("hello");
+            	Object ret_obj = api_method.invoke(api_class, s);
             	
 		        String ret = ret_obj.toString();
-		        
+		        */
+            	String ret = "hello";
 		        // 返回结果
 		        String redis_cmd = this.bulidRedisString(ret);
 		        
 		        ctx.writeAndFlush(this.buildRespBody(redis_cmd));
-            }
+            
         }
     }
 
