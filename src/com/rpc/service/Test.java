@@ -2,7 +2,7 @@ package com.rpc.service;
 
 public class Test {
 
-	public String getUserInfo(String uid, int age) {
+	public String getUserInfo(String uid, Integer age) {
 		return "ruansheng";
 	}
 }
