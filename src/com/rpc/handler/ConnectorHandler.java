@@ -1,13 +1,13 @@
 package com.rpc.handler;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.rpc.entry.Api;
 import com.rpc.entry.Request;
+import com.rpc.entry.Response;
+import com.rpc.utils.Uuid;
 import com.rpc.utils.JsonFile;
+import com.rpc.utils.ParseArgs;
 import com.rpc.utils.StringToArray;
-import com.rpc.utils.Types;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -15,14 +15,7 @@ import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.omg.Dynamic.Parameter;
-
 
 /**
  * Created by ruansheng on 16/7/1.
@@ -45,11 +38,11 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
         // 将字符串用redis协议解析
         String strings[] = StringToArray.convertStrToArray(body);
         
+        String uuid = Uuid.getUUID();
         if(strings.length != 5) {
-        	Map<String, String> map = new HashMap<String, String>();
-        	map.put("ec", "401");
-        	map.put("em", "redis protocal is error");
-        	String cmd = JSON.toJSON(map).toString();
+        	Response response = new Response(uuid, 401, "redis protocal is error");
+        	
+        	String cmd = JSON.toJSON(response).toString();
         	String redis_cmd = this.bulidRedisString(cmd);
             ctx.writeAndFlush(this.buildRespBody(redis_cmd));
             return ;
@@ -57,32 +50,19 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
         
     	String params = strings[4];
         
-    	System.out.println("params:" + params);
-        
-    	Request req = JSON.parseObject(params, Request.class);
+    	// 构建Request
+    	Request request = ParseArgs.toRequest(params);
     	
-    	Object[] os = req.getParams().getArgs();
-    	
-    	Class<?>[] types = Types.getTypes(os);
-    	
-    	req.getParams().setTypes(types);
-    	
-    	String action = req.getAction();
-    	String m = req.getParams().getM();
-    	Object[] objs = req.getParams().getArgs();
-    	
-    	System.out.println("action:" + action);
-    	System.out.println("m:" + m);
-    	System.out.println("objs-length:" + objs.length);
-    	System.out.println("typs-length:" + types.length);
-    	System.out.println("typs-type:" + types.getClass().getName());
+    	String action = request.getAction();
+    	String m = request.getM();
+    	Object[] objs = request.getObjects();
+    	Class<?>[] types = request.getTypes();
     	
         // 接口不存在
         if(!this.api.containsKey(action)) {
-        	Map<String, String> map = new HashMap<String, String>();
-        	map.put("ec", "401");
-        	map.put("em", "action not exists");
-        	String cmd = JSON.toJSON(map).toString();
+        	Response response = new Response(uuid, 401, "action not exists");
+        	
+        	String cmd = JSON.toJSON(response).toString();
         	String redis_cmd = this.bulidRedisString(cmd);
             ctx.writeAndFlush(this.buildRespBody(redis_cmd));
             return ;
@@ -99,11 +79,13 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
     	
     	Object ret_obj = method.invoke(api_class, objs);
     	
-        String ret = ret_obj.toString();
-        
+    	// 构建Response
+    	Response response = new Response(uuid, 200, "success");
+    	response.setResult(ret_obj);
+    	String ret = JSON.toJSON(response).toString();
+    	        
     	// 返回结果
         String redis_cmd = this.bulidRedisString(ret);
-        
         ctx.writeAndFlush(this.buildRespBody(redis_cmd));
     }
 
