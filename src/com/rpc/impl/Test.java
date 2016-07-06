@@ -1,9 +1,11 @@
-package com.rpc.service;
+package com.rpc.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class Test {
+import com.rpc.inter.*;
+
+public class Test implements TestInterFace{
 
 	public String getKey(String uid, Integer age) {
 		return "ruansheng";
