@@ -4,15 +4,15 @@ public class Response {
 
 	private String id;
 	
-	private int ec;
+	private int en;
 	
 	private String em;
 	
 	private Object result;
 
-	public Response(String id, int ec, String em) {
+	public Response(String id, int en, String em) {
 		this.id = id;
-		this.ec = ec;
+		this.en = en;
 		this.em = em;
 	}
 	
@@ -24,12 +24,12 @@ public class Response {
 		this.id = id;
 	}
 
-	public int getEc() {
-		return ec;
+	public int getEn() {
+		return en;
 	}
 
-	public void setEc(int ec) {
-		this.ec = ec;
+	public void setEn(int en) {
+		this.en = en;
 	}
 
 	public String getEm() {
@@ -47,4 +47,5 @@ public class Response {
 	public void setResult(Object result) {
 		this.result = result;
 	}
+	
 }

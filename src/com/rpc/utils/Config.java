@@ -2,8 +2,6 @@ package com.rpc.utils;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +28,7 @@ public class Config {
             config.put("port", port);
 		} catch (Exception e) {
 		    config = null;
+		    System.out.println(e.getMessage());
 		}
         
 		return config;

@@ -17,6 +17,9 @@ import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+
 /**
  * Created by ruansheng on 16/7/1.
  */
@@ -24,10 +27,16 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
 
 	private HashMap<String, Api> api = null;
 	
+	private Logger logger = null;
+	
     public ConnectorHandler() {
     	// 加载配置文件
     	String filepath="res/api.json";
     	this.api = JsonFile.toApiProto(filepath);
+    	
+    	// log4j
+    	this.logger = Logger.getLogger(ConnectorHandler.class);
+    	PropertyConfigurator.configure("res/log4j.properties");
     }
 
     @Override
@@ -39,12 +48,19 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
         String strings[] = StringToArray.convertStrToArray(body);
         
         String uuid = Uuid.getUUID();
+        
+        if(strings.length == 3 && strings[2].equalsIgnoreCase("PING")) {
+        	logger.info(strings[2] + " --> PONG");
+        	Response response = new Response(uuid, 200, "success");
+        	response.setResult(new String("PONG"));
+            ctx.writeAndFlush(this.buildRespBody(response));
+            return ;
+        }
+        
         if(strings.length != 5) {
+        	logger.info(strings[4] + " --> redis protocal is error");
         	Response response = new Response(uuid, 401, "redis protocal is error");
-        	
-        	String cmd = JSON.toJSON(response).toString();
-        	String redis_cmd = this.bulidRedisString(cmd);
-            ctx.writeAndFlush(this.buildRespBody(redis_cmd));
+            ctx.writeAndFlush(this.buildRespBody(response));
             return ;
         }
         
@@ -60,33 +76,28 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
     	
         // 接口不存在
         if(!this.api.containsKey(action)) {
+        	logger.info(action + " --> action not exists");
         	Response response = new Response(uuid, 401, "action not exists");
-        	
-        	String cmd = JSON.toJSON(response).toString();
-        	String redis_cmd = this.bulidRedisString(cmd);
-            ctx.writeAndFlush(this.buildRespBody(redis_cmd));
+            ctx.writeAndFlush(this.buildRespBody(response));
             return ;
         }
     	
+        // 通过反射调用方法
         Api api_obj = api.get(action);
     	String interClass = api_obj.getInterClass();
-    	
     	Class<?> class_obj = Class.forName(interClass);
-    	
     	Object api_class = class_obj.newInstance();
-    	
     	Method method = class_obj.getMethod(m, types);
-    	
     	Object ret_obj = method.invoke(api_class, objs);
+    	
+    	logger.info(ret_obj + " --> invoke is ok");
     	
     	// 构建Response
     	Response response = new Response(uuid, 200, "success");
     	response.setResult(ret_obj);
-    	String ret = JSON.toJSON(response).toString();
-    	        
+    	
     	// 返回结果
-        String redis_cmd = this.bulidRedisString(ret);
-        ctx.writeAndFlush(this.buildRespBody(redis_cmd));
+        ctx.writeAndFlush(this.buildRespBody(response));
     }
 
     @Override
@@ -101,12 +112,16 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
 
     /**
      * 构建response data
-     * @param body
+     * @param response
      * @return
      */
-    private ByteBuf buildRespBody(String body) {
-        body += System.getProperty("line.separator");
-        ByteBuf resp = Unpooled.copiedBuffer(body.getBytes());
+    private ByteBuf buildRespBody(Response response) {
+    	String cmd = JSON.toJSON(response).toString();
+    	logger.info(cmd + " --> return is ok");
+    	String redis_cmd = this.bulidRedisString(cmd);
+    	
+    	redis_cmd += System.getProperty("line.separator");
+        ByteBuf resp = Unpooled.copiedBuffer(redis_cmd.getBytes());
         return resp;
     }
 
