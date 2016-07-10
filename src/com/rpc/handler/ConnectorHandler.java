@@ -11,8 +11,8 @@ import com.rpc.utils.StringToArray;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import org.apache.log4j.PropertyConfigurator;
 /**
  * Created by ruansheng on 16/7/1.
  */
-public class ConnectorHandler extends ChannelHandlerAdapter{
+public class ConnectorHandler extends SimpleChannelInboundHandler<String>{
 
 	private HashMap<String, Api> api = null;
 	
@@ -40,10 +40,7 @@ public class ConnectorHandler extends ChannelHandlerAdapter{
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object obj) throws Exception {
-    	// 收到请求消息
-        String body = (String)obj;
-        
+	protected void channelRead0(ChannelHandlerContext ctx, String body) throws Exception {        
         // 将字符串用redis协议解析
         String strings[] = StringToArray.convertStrToArray(body);
         
