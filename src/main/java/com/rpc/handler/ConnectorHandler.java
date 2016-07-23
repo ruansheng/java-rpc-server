@@ -4,10 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.rpc.entry.Api;
 import com.rpc.entry.Request;
 import com.rpc.entry.Response;
-import com.rpc.utils.Uuid;
 import com.rpc.utils.JsonFile;
 import com.rpc.utils.ParseArgs;
 import com.rpc.utils.StringToArray;
+import com.rpc.utils.Uuid;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -31,12 +31,12 @@ public class ConnectorHandler extends SimpleChannelInboundHandler<String>{
 	
     public ConnectorHandler() {
     	// 加载配置文件
-    	String filepath="res/api.json";
+    	String filepath="resources//api.json";
     	this.api = JsonFile.toApiProto(filepath);
     	
     	// log4j
     	this.logger = Logger.getLogger(ConnectorHandler.class);
-    	PropertyConfigurator.configure("res/log4j.properties");
+    	PropertyConfigurator.configure("resources/log4j.properties");
     }
 
     @Override

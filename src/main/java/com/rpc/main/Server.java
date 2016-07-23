@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import com.rpc.connector.Connector;
 import com.rpc.utils.Config;
 
 /**
@@ -16,8 +17,8 @@ public class Server {
     	Logger logger = null;
     	try {
     		logger = Logger.getLogger(Server.class);
-    		PropertyConfigurator.configure("res/log4j.properties");
-    		String filePath = "res/server.properties";
+    		PropertyConfigurator.configure("resources/log4j.properties");
+    		String filePath = "resources/server.properties";
         	Map<String, Object> config = new Config().getServerConfig(filePath);
         	if(config == null) {
         		logger.info("get server config is fail");

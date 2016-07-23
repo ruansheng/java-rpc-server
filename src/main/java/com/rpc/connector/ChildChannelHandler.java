@@ -1,9 +1,10 @@
-package com.rpc.main;
+package com.rpc.connector;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import com.rpc.handler.ConnectorHandler;
+
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
@@ -17,7 +18,7 @@ public class ChildChannelHandler  extends ChannelInitializer<SocketChannel>{
 	
 	public ChildChannelHandler() {
 		this.logger = Logger.getLogger(ChildChannelHandler.class);
-    	PropertyConfigurator.configure("res/log4j.properties");
+    	PropertyConfigurator.configure("resources/log4j.properties");
 	}
 	
     @Override
